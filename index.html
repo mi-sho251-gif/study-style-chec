@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あなたにぴったりの勉強法診断</title>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --bg-color: #E3F2FD;
+            --white: #ffffff;
+        }
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 { color: var(--primary-color); text-align: center; font-size: 1.5rem; }
+        .description { text-align: center; margin-bottom: 25px; font-size: 0.9rem; }
+        .question { margin-bottom: 20px; padding: 15px; border-bottom: 1px solid #eee; }
+        .question label { display: block; cursor: pointer; }
+        .btn {
+            display: block; width: 100%; padding: 15px;
+            background-color: var(--primary-color); color: white;
+            border: none; border-radius: 30px; font-size: 1rem;
+            font-weight: bold; cursor: pointer; margin-top: 20px;
+        }
+        .result-area { display: none; text-align: center; margin-top: 20px; }
+        .type-icon { font-size: 4rem; margin-bottom: 10px; }
+        .method-list { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📝 あなたにぴったりの勉強法診断</h1>
+    <p class="description">あなたの性格や学習スタイルから、最適な勉強法を見つけます</p>
+
+    <div id="quiz-area">
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="1"> 教科書の図やイラストに目が止まることが多い</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="1"> カラーペンやマーカーを使ってノートを取るのが好き</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="2"> 授業を聞いているだけで内容がスッと入ってくることが多い</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="2"> 音読すると内容を覚えやすいと感じる</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="3"> 実際に手を動かしてやってみることで理解できることが多い</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="3"> 体験したことや実験の内容はよく覚えている</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="4"> 教科書や参考書を読んで自分でまとめるのが好き</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="4"> 文章を箇条書きやリストに整理するのが得意</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="5"> 「なぜそうなるのか」理由がわかると納得できる</label></div>
+        <div class="question"><label><input type="checkbox" class="q-check" data-type="5"> 仕組みや原理から理解しようとする方だ</label></div>
+
+        <button class="btn" onclick="calculateResult()">結果を見る！</button>
+    </div>
+
+    <div id="result-area" class="result-area">
+        <h2>診断結果</h2>
+        <div class="type-icon" id="res-icon"></div>
+        <h3 id="res-title"></h3>
+        <p id="res-desc"></p>
+        <div class="method-list">
+            <h4>💡 おすすめ勉強法</h4>
+            <ul id="res-methods"></ul>
+        </div>
+        <button class="btn" style="background:#ccc;" onclick="location.reload()">もう一度診断する</button>
+    </div>
+</div>
+
+<script>
+    const GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE'; // 後で貼り替えてください
+
+    const types = {
+        1: { name: "視覚型学習者", icon: "👁️", desc: "図やグラフで理解するのが得意。カラフルなノートを作るのがおすすめ！", methods: ["マインドマップを使って情報を整理しよう", "カラーペンで重要な箇所を色分けするのが効果的", "YouTube動画や図解を積極的に活用しよう"] },
+        2: { name: "聴覚型学習者", icon: "🎧", desc: "聞いて理解するのが得意。音読や講義形式がおすすめ！", methods: ["声に出して読む「音読勉強法」が効果的", "友達に説明することで理解が深まる", "軽いBGMをかけながら勉強すると集中しやすい"] },
+        3: { name: "体験型学習者", icon: "✍️", desc: "実際に書いたり体を動かしたりすることで理解が深まるタイプ。反復練習や実験が向いています！", methods: ["何度も書いて覚える「反復書き取り」が効果的", "実験や体験型の学習に積極的に参加しよう", "ポモドーロ法（25分集中+5分休憩）で集中力UP"] },
+        4: { name: "読み書き型学習者", icon: "📖", desc: "文章を読んで整理することが得意。ノートにまとめることで理解が深まるタイプです。", methods: ["丁寧にノートを取り、自分の言葉でまとめ直そう", "箇条書きやリストで情報を整理するのが効果的", "問題を自分で作って解く「自作問題法」がおすすめ"] },
+        5: { name: "論理型学習者", icon: "🧩", desc: "理由や仕組みから理解するのが得意。「なぜ？」を追求することで力を発揮するタイプです。", methods: ["「なぜそうなるのか」を徹底的に調べてみよう", "原理・原則から覚えることで応用力がつく", "問題を解く前に「解法の流れ」を考える習慣をつけよう"] }
+    };
+
+    async function calculateResult() {
+        const checks = document.querySelectorAll('.q-check');
+        let scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        
+        checks.forEach(c => {
+            if(c.checked) scores[c.getAttribute('data-type')]++;
+        });
+
+        // 最多スコアのタイプを決定
+        let bestType = Object.keys(scores).reduce((a, b) => scores[a] >= scores[b] ? a : b);
+        displayResult(bestType);
+
+        // データの送信準備
+        const geoInfo = await fetch('https://ipapi.co/json/').then(res => res.json()).catch(() => ({city: "不明", region: "不明"}));
+        
+        const payload = {
+            timestamp: new Date().toLocaleString('ja-JP'),
+            result: types[bestType].name,
+            scores: scores,
+            location: `${geoInfo.region} ${geoInfo.city}`,
+            device: navigator.userAgent
+        };
+
+        sendToGas(payload);
+    }
+
+    function displayResult(typeId) {
+        const type = types[typeId];
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('res-icon').innerText = type.icon;
+        document.getElementById('res-title').innerText = type.name;
+        document.getElementById('res-desc').innerText = type.desc;
+        const list = document.getElementById('res-methods');
+        list.innerHTML = type.methods.map(m => `<li>${m}</li>`).join('');
+    }
+
+    async function sendToGas(payload) {
+        const formData = new URLSearchParams();
+        formData.append('data', JSON.stringify(payload));
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData,
+            });
+            console.log("Data sent successfully");
+        } catch (e) {
+            console.error("Error sending data", e);
+        }
+    }
+</script>
+</body>
+</html>
